@@ -1,0 +1,33 @@
+{
+  "author": "Frederic Delbos <fred@hyperboloide.com>",
+  "name": "mv",
+  "version": "0.1.1",
+  "devDependencies": {
+    "coffee-script": "latest",
+    "gulp": "^3.9.0",
+    "gulp-angular-gettext": "^2.1.0",
+    "gulp-angular-templatecache": "^1.7.0",
+    "gulp-coffee": "^2.3.1",
+    "gulp-coffeelint": "^0.5.0",
+    "gulp-concat": "^2.6.0",
+    "gulp-connect": "^2.2.0",
+    "gulp-less": "^3.0.3",
+    "gulp-merge": "^0.1.1",
+    "gulp-minify-html": "^1.0.4",
+    "gulp-uglify": "^1.4.0",
+    "gulp-util": "^3.0.6",
+    "html-minifier": "latest",
+    "jasmine-core": "^2.3.4",
+    "karma": "^0.13.9",
+    "karma-chrome-launcher": "^0.2.0",
+    "karma-coffee-preprocessor": "^0.3.0",
+    "karma-jasmine": "^0.3.6",
+    "karma-phantomjs-launcher": "~0.1",
+    "less": "latest",
+    "uglify-js": "2.x"
+  },
+  "dependencies": {
+    "lodash": "~3.10.1"
+  }
+
+}

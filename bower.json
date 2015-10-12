@@ -1,0 +1,31 @@
+{
+  "name": "mv",
+  "version": "0.1.1",
+  "authors": [
+    "Frederic Delbos <fred@hyperboloide.com>"
+  ],
+  "description": "AngularJS Drag and Drop plugin.",
+  "main": "./mv.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "demo",
+    "src",
+    "translations",
+    "package.json",
+    "karma.conf.coffee",
+    ".gitignore",
+    ".git",
+    "gulpfile.js"
+  ],
+  "dependencies": {
+    "lodash": "~3.10.1"
+  },
+  "devDependencies": {
+    "angular-mocks": "~1.4.5",
+    "bootstrap": "~3.3.5"
+  }
+}
