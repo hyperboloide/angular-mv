@@ -1,10 +1,8 @@
 angular.module("angular-mv").directive("mvContainer", [
-  "mvList"
   "mvController"
   "$timeout"
   "$rootScope"
   (
-    MvList
     mvController
     $timeout
     $rootScope
