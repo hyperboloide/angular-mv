@@ -1,6 +1,6 @@
 angular.module('demo', ['angular-mv'])
 
-angular.module('demo').controller("simpleCtrl", ["$scope", ($scope) ->
+angular.module('demo').controller("simpleCtrl", ["$scope", "$element", ($scope, $element) ->
 
   $scope.lines1 = [
     {msg: "Line 1"}
@@ -13,11 +13,6 @@ angular.module('demo').controller("simpleCtrl", ["$scope", ($scope) ->
 
   $scope.lines2 = [
     {msg: "Line 1"}
-    # {msg: "Line 2"}
-    # {msg: "Line 3"}
-    # {msg: "Line 4"}
-    # {msg: "Line 5"}
-    # {msg: "Line 6"}
   ]
 
   $scope.lines3 = []
@@ -28,5 +23,49 @@ angular.module('demo').controller("simpleCtrl", ["$scope", ($scope) ->
       lines2: $scope.lines2
       lines3: $scope.lines3
     console.log model
+
+])
+
+angular.module("demo").directive("demoList", [
+  "mvList"
+  (
+    MvList
+  ) ->
+
+    l = (scope, elem) ->
+
+      w = scope.$watch("lines", (lines) ->
+        if !lines? then return else w()
+        scope.list = new MvList(lines, elem)
+        scope.list.updated = -> scope.$apply()
+      )
+
+      scope.$on("destroy", -> scope.list.destroy())
+
+    return {
+      link: l
+      restrict: "E"
+      replace: true
+      scope:
+        lines: "=lines"
+      template: """
+      <ul class="list-group">
+
+        <li
+          ng-repeat="line in lines"
+          mv-draggable
+          class="list-group-item"
+          ng-class="{'list-group-item-warning': list.draggedData() == line}">
+
+          {{ line.msg }}
+
+        </li>
+
+        <li class="list-group-item active mvPlaceholder">
+          This list is empty, drop an element.
+        </li>
+      </ul>
+      """
+    }
 
 ])

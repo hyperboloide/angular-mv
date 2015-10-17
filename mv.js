@@ -4,49 +4,12 @@ angular.module("angular-mv").directive("mvContainer", [
   "mvController", "$timeout", "$rootScope", function(mvController, $timeout, $rootScope) {
     var l;
     l = function(scope, elem) {
-      var MvItem, dragend, dragenter, dragleave, dragover, dragstart, drop, events, getEl, handle, hidePlaceholder, isEmpty, k, onLeaveList, placeholder, showPlaceholder, stopPropagation, v;
-      placeholder = $(elem.parent().find("[mv-placeholder]")[0]);
-      showPlaceholder = function() {
-        if (!placeholder.length) {
-          return;
-        }
-        if (!$.contains(placeholder, elem)) {
-          elem.append(placeholder);
-        }
-        return placeholder.show();
-      };
-      hidePlaceholder = function() {
-        if (placeholder.length) {
-          return placeholder.hide();
-        }
-      };
-      if (placeholder.length) {
-        isEmpty = function() {
-          return scope.list.length === 0;
-        };
-        scope.$watch(isEmpty, function(v) {
-          if (v) {
-            return showPlaceholder();
-          } else {
-            return hidePlaceholder();
-          }
-        });
-      }
-      MvItem = (function() {
-        function MvItem(elem1, list, data) {
-          this.elem = elem1;
-          this.list = list;
-          this.data = data;
-        }
-
-        return MvItem;
-
-      })();
+      var dragend, dragenter, dragleave, dragover, dragstart, drop, events, getEl, handle, k, leave, move, stopPropagation, touchend, touchmove, touchstart, v;
       getEl = function(e) {
         return angular.element(e.target);
       };
       stopPropagation = function(e) {
-        e = e.originalEvent;
+        e = e.originalEvent != null ? e.originalEvent : e;
         if (e.stopPropagation != null) {
           e.stopPropagation();
         }
@@ -59,106 +22,170 @@ angular.module("angular-mv").directive("mvContainer", [
           };
         })(this);
       };
-      onLeaveList = function(leave) {
-        if (scope.list.length <= 1) {
-          if (leave) {
-            return showPlaceholder();
-          } else {
-            return hidePlaceholder();
-          }
-        }
-      };
       dragstart = (function(_this) {
         return function(e) {
           var el, item;
           el = getEl(e);
-          item = new MvItem(el, scope.list, scope.list[el.index()]);
-          mvController.start(item, e, false);
-          return mvController.get().leaveListCb(onLeaveList);
+          item = {
+            elem: el,
+            list: scope.list,
+            data: scope.list[el.index()]
+          };
+          return mvController.start(item, e, false);
         };
       })(this);
-      dragenter = function(e) {
-        var ctrl, el;
-        ctrl = mvController.get();
-        if (ctrl == null) {
-          return;
-        }
-        el = getEl(e);
-        if ($.contains(el, ctrl.dragged.elem)) {
-          return;
-        }
-        if (el.is(placeholder)) {
-          ctrl.insertInto(elem, scope.list);
-          return hidePlaceholder();
-        } else {
-          return ctrl.switchWith(el, scope.list);
-        }
-      };
-      dragleave = function(e) {
-        var ctrl, el;
-        ctrl = mvController.get();
-        if (ctrl == null) {
-          return;
-        }
-        el = getEl(e);
-        if ($.contains(el, ctrl.dragged.elem)) {
-          return;
-        }
-        ctrl.restorePosition();
-        if (placeholder && !el.is(placeholder)) {
-          if (scope.list.length === 0) {
-            return placeholder.show();
+      touchstart = (function(_this) {
+        return function(e) {
+          var el, item;
+          el = getEl(e);
+          item = {
+            elem: el,
+            list: scope.list,
+            data: scope.list[el.index()]
+          };
+          return mvController.start(item, e, true);
+        };
+      })(this);
+      touchmove = (function(_this) {
+        return function(e) {
+          var ctrl, offset, touch;
+          if (_.isFunction(e.preventDefault) != null) {
+            e.preventDefault();
           }
-        }
+          touch = e.targetTouches[0];
+          ctrl = mvController.get();
+          offset = ctrl.offset;
+          ctrl.preview.offset({
+            top: touch.pageY - offset.y,
+            left: touch.pageX - offset.x
+          });
+          return ctrl.setLastTouchmove(touch);
+        };
+      })(this);
+      dragenter = (function(_this) {
+        return function(e) {
+          var ctrl, el;
+          ctrl = mvController.get();
+          if (ctrl == null) {
+            return;
+          }
+          el = getEl(e);
+          if ($.contains(el, ctrl.preview)) {
+            return;
+          }
+          if (el.hasClass("mvPlaceholder")) {
+            return ctrl.insertInto(elem, scope.list);
+          } else {
+            return ctrl.switchWith(el, scope.list, e);
+          }
+        };
+      })(this);
+      dragleave = function(e) {
+        return getEl(e).trigger("leave.angular-mv");
       };
-      dragover = function(e) {
-        if (_.isFunction(e.preventDefault) != null) {
-          e.preventDefault();
-        }
-        e.dataTransfer.dropEffect = 'all';
-        return false;
-      };
+      leave = (function(_this) {
+        return function(e) {
+          var ctrl, el;
+          ctrl = mvController.get();
+          if (ctrl == null) {
+            return;
+          }
+          el = getEl(e);
+          if ($.contains(el, ctrl.preview)) {
+            return;
+          }
+          return ctrl.restorePosition(ctrl.preview);
+        };
+      })(this);
+      dragover = (function(_this) {
+        return function(e) {
+          var ctrl, el;
+          if (_.isFunction(e.preventDefault) != null) {
+            e.preventDefault();
+          }
+          e.dataTransfer.dropEffect = 'move';
+          ctrl = mvController.get();
+          el = getEl(e);
+          if (!el.is(ctrl.preview)) {
+            ctrl.switchWith(el, scope.list, e);
+          }
+          return false;
+        };
+      })(this);
+      move = (function(_this) {
+        return function(e) {
+          var ctrl, el;
+          ctrl = mvController.get();
+          if (ctrl == null) {
+            return;
+          }
+          el = getEl(e);
+          if ($.contains(el, ctrl.preview)) {
+            return;
+          }
+          if (el.hasClass("mvPlaceholder")) {
+            return ctrl.insertInto(elem, scope.list);
+          } else {
+            return ctrl.switchWith(el, scope.list, ctrl.lastTouchMove);
+          }
+        };
+      })(this);
       dragend = (function(_this) {
         return function(e) {
-          scope.mvSelected = null;
-          if (mvController.get() != null) {
+          var ctrl;
+          console.log("dragend");
+          ctrl = mvController.get();
+          if (ctrl != null) {
+            console.log("restore");
             mvController.stop();
           }
           return scope.$apply();
         };
       })(this);
+      touchend = function(e) {
+        mvController.commit();
+        return $timeout(function() {
+          return scope.$apply();
+        });
+      };
       drop = (function(_this) {
         return function(e) {
-          var apply;
-          apply = scope.list !== mvController.get().dragged.list;
+          console.log("drop");
           mvController.commit();
-          mvController.stop();
-          if (apply) {
-            return scope.$apply();
-          }
+          return scope.$apply();
         };
       })(this);
       events = {
         "dragstart": dragstart,
+        "touchstart": touchstart,
+        "touchmove": touchmove,
         "dragenter": dragenter,
+        "move": move,
         "dragleave": dragleave,
+        "leave": leave,
         "dragover": dragover,
         "dragend": dragend,
+        "touchend": touchend,
         "drop": drop
       };
       for (k in events) {
         v = events[k];
         elem.on(k + ".angular-mv", "[mv-draggable]", handle(v));
       }
-      elem.on("dragenter", "[mv-placeholder]", handle(dragenter));
-      elem.on("dragleave", "[mv-placeholder]", handle(dragleave));
+      elem.on("dragenter.angular-mv", ".mvPlaceholder", handle(dragenter));
+      elem.on("move.angular-mv", ".mvPlaceholder", handle(move));
+      elem.on("dragleave.angular-mv", ".mvPlaceholder", handle(dragleave));
+      elem.on("leave.angular-mv", ".mvPlaceholder", handle(leave));
       return scope.$on("$destroy", function() {
+        console.log("destroy container");
         for (k in events) {
           v = events[k];
           elem.off(k + ".angular-mv", "[mv-draggable]");
         }
-        elem.off("dragenter", "[mv-placeholder]");
-        return elem.off("dragleave", "[mv-placeholder]");
+        elem.off("dragenter.angular-mv", ".mvPlaceholder");
+        elem.off("leave.angular-mv", ".mvPlaceholder");
+        elem.off("dragleave.angular-mv", ".mvPlaceholder");
+        return elem.off("leave.angular-mv", ".mvPlaceholder");
       });
     };
     return {
@@ -172,39 +199,97 @@ angular.module("angular-mv").directive("mvContainer", [
 ]);
 
 angular.module("angular-mv").factory("mvController", [
-  "$timeout", function($timeout) {
+  "$timeout", "$rootScope", function($timeout, $rootScope) {
     var MvController, _controller;
     _controller = null;
     MvController = (function() {
-      function MvController(dragged1, event, mobile1) {
+      function MvController(dragged1, event, mobile1, vertical) {
         var json;
         this.dragged = dragged1;
-        this.mobile = mobile1;
-        this.position = {
-          parent: this.dragged.elem.parent(),
-          index: this.dragged.elem.index()
+        this.mobile = mobile1 != null ? mobile1 : false;
+        this.vertical = vertical != null ? vertical : true;
+        this.original = {
+          container: this.dragged.container,
+          index: _.indexOf(this.dragged.container.list, this.dragged.data),
+          height: this.dragged.elem.outerHeight(),
+          whidth: this.dragged.elem.outerWidth()
         };
         if (this.mobile === false) {
           json = JSON.stringify(this.dragged.data);
           event.dataTransfer.setData("application/json", json);
+          this.setDragPreview(event);
         }
-        this.createPreview(event);
+        this.registerBody();
+        this.original.container.updated();
       }
+
+      MvController.prototype.registerBody = function() {
+        if (this.mobile === false) {
+          $("body").on("dragover.angular-mv", (function(_this) {
+            return function(e) {
+              e = e.originalEvent;
+              if (_.isFunction(e.preventDefault) != null) {
+                e.preventDefault();
+              }
+              e.dataTransfer.dropEffect = 'move';
+              _this.restorePosition();
+              return false;
+            };
+          })(this));
+          return $("body").on("drop.angular-mv", (function(_this) {
+            return function() {
+              console.log("body drop");
+              return _this.clean();
+            };
+          })(this));
+        }
+      };
+
+      MvController.prototype.unregisterBody = function() {
+        if (this.mobile === false) {
+          $("body").off("dragover.angular-mv");
+          return $("body").off("drop.angular-mv");
+        }
+      };
+
+      MvController.prototype.restorePosition = function() {
+        var idx;
+        if (this.dragged.container !== this.original.container) {
+          idx = _.indexOf(this.dragged.container.list, this.dragged.data);
+          this.dragged.container.list.splice(idx, 1);
+          this.dragged.container.updated();
+        }
+        idx = _.indexOf(this.original.container.list, this.dragged.data);
+        if (idx !== this.original.index) {
+          if (idx >= 0) {
+            this.original.container.list.splice(idx, 1);
+          }
+          this.original.container.list.splice(this.original.index, 0, this.dragged.data);
+          this.dragged.container = this.original.container;
+          return this.original.container.updated();
+        }
+      };
 
       MvController.prototype.previewOffset = function(event) {
         var o;
         o = this.dragged.elem.offset();
-        return this.offset = [event.pageX - o.left, event.pageY - o.top];
+        return this.offset = {
+          x: event.pageX - o.left,
+          y: event.pageY - o.top
+        };
       };
 
       MvController.prototype.createPreview = function(event) {
-        var ref, x, y;
         this.preview = this.dragged.elem.clone();
         this.preview.width(this.dragged.elem.width());
         this.preview.appendTo("body");
         this.preview.attr("angular-mv-dragger-preview", true);
-        ref = this.previewOffset(event), x = ref[0], y = ref[1];
-        event.dataTransfer.setDragImage(this.preview[0], x, y);
+        return this.previewOffset(event);
+      };
+
+      MvController.prototype.setDragPreview = function(event) {
+        this.createPreview(event);
+        event.dataTransfer.setDragImage(this.preview[0], this.offset.x, this.offset.y);
         return $timeout((function(_this) {
           return function() {
             return _this.preview.hide();
@@ -212,63 +297,78 @@ angular.module("angular-mv").factory("mvController", [
         })(this));
       };
 
-      MvController.prototype.switchWith = function(elem, list) {
-        var isLast;
-        this.list = list;
-        isLast = elem.index() === elem.parent().children().length - 1;
-        if (isLast || elem.prev().is(this.dragged.elem)) {
-          this.dragged.elem.insertAfter(elem);
-        } else {
-          this.dragged.elem.insertBefore(elem);
-        }
-        if (this.list !== this.dragged.list && (this.onLeaveList != null)) {
-          this.onLeaveList(true);
-        }
-        return this.switching = true;
-      };
-
-      MvController.prototype.leaveListCb = function(fn) {
-        return this.onLeaveList = fn;
-      };
-
-      MvController.prototype.insertInto = function(elem, list) {
-        this.list = list;
-        elem.prepend(this.dragged.elem);
-        return this.switching = true;
-      };
-
-      MvController.prototype.restorePosition = function() {
-        var childs;
-        if (this.switching) {
-          return this.switching = false;
-        } else {
-          this.list = null;
-          childs = this.position.parent.children();
-          if (this.position.index >= childs.length) {
-            this.position.parent.append(this.dragged.elem);
-          } else {
-            this.dragged.elem.insertBefore(childs[this.position.index]);
+      MvController.prototype.canSwitch = function(elem, event) {
+        if (this.vertical) {
+          if (elem.outerHeight() <= this.original.height) {
+            return true;
           }
-          if (this.list !== this.dragged.list && (this.onLeaveList != null)) {
-            return this.onLeaveList(false);
-          }
+          return event.pageY - elem.offset().top <= this.original.height;
         }
+        return false;
       };
 
-      MvController.prototype.commit = function(item) {
-        var dlist, index;
-        if (this.list == null) {
-          return;
+      MvController.prototype.moveAfter = function(list, data) {
+        var idx;
+        idx = _.indexOf(list, this.dragged.data);
+        if (idx !== -1) {
+          list.splice(idx, 1);
         }
-        dlist = this.dragged.list;
-        dlist.splice(_.indexOf(dlist, this.dragged.data), 1);
-        index = this.dragged.elem.index();
-        this.list.splice(index, 0, this.dragged.data);
-        return this.restorePosition();
+        idx = _.indexOf(list, data);
+        return list.splice(idx + 1, 0, this.dragged.data);
+      };
+
+      MvController.prototype.moveBefore = function(list, data) {
+        var idx;
+        idx = _.indexOf(list, this.dragged.data);
+        if (idx !== -1) {
+          list.splice(idx, 1);
+        }
+        idx = _.indexOf(list, data);
+        return list.splice(idx, 0, this.dragged.data);
+      };
+
+      MvController.prototype.removeFrom = function() {
+        var idx;
+        idx = _.indexOf(this.dragged.container.list, this.dragged.data);
+        this.dragged.container.list.splice(idx, 1);
+        return this.dragged.container.updated();
+      };
+
+      MvController.prototype.switchWith = function(data, container, elem, event) {
+        var idxDrag, idxElem;
+        if (container !== this.dragged.container) {
+          this.removeFrom();
+        }
+        idxElem = _.indexOf(container.list, data);
+        idxDrag = _.indexOf(container.list, this.dragged.data);
+        switch (false) {
+          case idxDrag !== -1:
+            this.moveBefore(container.list, data);
+            break;
+          case idxElem !== container.list.length - 1:
+            this.moveAfter(container.list, data);
+            break;
+          case idxElem !== idxDrag + 1:
+            this.moveAfter(container.list, data);
+            break;
+          case !this.canSwitch(elem, event):
+            this.moveBefore(container.list, data);
+        }
+        this.dragged.container = container;
+        return container.updated();
+      };
+
+      MvController.prototype.insertInto = function(container) {
+        this.removeFrom();
+        container.list.push(this.dragged.data);
+        this.dragged.container = container;
+        return container.updated();
       };
 
       MvController.prototype.clean = function() {
-        return this.preview.remove();
+        this.unregisterBody();
+        _controller = null;
+        return this.dragged.container.updated();
       };
 
       return MvController;
@@ -284,16 +384,9 @@ angular.module("angular-mv").factory("mvController", [
       get: function() {
         return _controller;
       },
-      commit: function() {
-        if (_controller != null) {
-          _controller.commit();
-        }
-        return this.stop();
-      },
       stop: function() {
         if (_controller != null) {
-          _controller.clean();
-          return _controller = null;
+          return _controller.clean();
         }
       }
     };
@@ -301,32 +394,138 @@ angular.module("angular-mv").factory("mvController", [
 ]);
 
 angular.module("angular-mv").directive("mvDraggable", [
-  function() {
+  "$timeout", "mvController", function($timeout, mvController) {
     var l;
     l = function(scope, elem) {
-      var dragend, dragstart, register;
-      elem.attr("draggable", true);
-      dragstart = function() {
-        scope.mvDragged = true;
-        return scope.$apply();
-      };
-      dragend = function() {
-        scope.mvDragged = false;
-        return scope.$apply();
-      };
-      register = function() {
-        elem.off("dragstart.angular-mv").on("dragstart.angular-mv", dragstart);
-        return elem.off("dragend.angular-mv").on("dragend.angular-mv", dragend);
-      };
-      scope.$watch(register);
-      return scope.$on("$destroy", function() {
-        elem.off("dragstart.angular-mv");
-        return elem.off("dragend.angular-mv");
-      });
+      return elem.attr("draggable", true);
     };
     return {
       link: l,
       restrict: "A"
     };
+  }
+]);
+
+var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+angular.module("angular-mv").factory("mvList", [
+  "mvController", function(mvController) {
+    var MvList;
+    return MvList = (function() {
+      var getEl, stopPropagation;
+
+      function MvList(list, elem) {
+        this.list = list;
+        this.elem = elem;
+        this.drop = bind(this.drop, this);
+        this.dragover = bind(this.dragover, this);
+        this.dragenter = bind(this.dragenter, this);
+        this.dragstart = bind(this.dragstart, this);
+        this.destroy = bind(this.destroy, this);
+        this.setup();
+      }
+
+      getEl = function(e) {
+        return angular.element(e.target);
+      };
+
+      stopPropagation = function(e) {
+        e = e.originalEvent != null ? e.originalEvent : e;
+        if (e.stopPropagation != null) {
+          e.stopPropagation();
+        }
+        return e;
+      };
+
+      MvList.prototype.handle = function(next) {
+        return (function(_this) {
+          return function(e) {
+            return next(stopPropagation(e));
+          };
+        })(this);
+      };
+
+      MvList.prototype.setup = function() {
+        this.elem.on("dragstart.angular-mv", "[mv-draggable]", this.handle(this.dragstart));
+        this.elem.on("dragenter.angular-mv", "[mv-draggable]", this.handle(this.dragenter));
+        this.elem.on("dragenter.angular-mv", ".mvPlaceholder", this.handle(this.dragenter));
+        this.elem.on("dragover.angular-mv", "[mv-draggable]", this.handle(this.dragover));
+        return this.elem.on("drop.angular-mv", "[mv-draggable]", this.handle(this.drop));
+      };
+
+      MvList.prototype.destroy = function() {
+        this.elem.off("dragstart.angular-mv", "[mv-draggable]");
+        this.elem.off("dragenter.angular-mv", "[mv-draggable]");
+        this.elem.on("dragenter.angular-mv", ".mvPlaceholder");
+        this.elem.off("dragover.angular-mv", "[mv-draggable]");
+        return this.elem.off("drop.angular-mv", "[mv-draggable]");
+      };
+
+      MvList.prototype.draggedData = function() {
+        if (mvController.get() == null) {
+          return;
+        }
+        return mvController.get().dragged.data;
+      };
+
+      MvList.prototype.dragstart = function(e) {
+        var dg, el;
+        el = getEl(e);
+        dg = {
+          data: this.list[el.index()],
+          elem: el,
+          container: this
+        };
+        return mvController.start(dg, e);
+      };
+
+      MvList.prototype.dragenter = function(e) {
+        var ctrl, data, el;
+        ctrl = mvController.get();
+        if (ctrl == null) {
+          return;
+        }
+        el = getEl(e);
+        if (el.hasClass("mvPlaceholder")) {
+          return ctrl.insertInto(this);
+        } else if (el.attr("mv-draggable") != null) {
+          data = this.list[el.index()];
+          if (ctrl.dragged.data === data) {
+            return;
+          }
+          return ctrl.switchWith(data, this, el, e);
+        }
+      };
+
+      MvList.prototype.dragover = function(e) {
+        var ctrl, el;
+        if (_.isFunction(e.preventDefault) != null) {
+          e.preventDefault();
+        }
+        e.dataTransfer.dropEffect = 'move';
+        ctrl = mvController.get();
+        el = getEl(e);
+        if (el.attr("mv-draggable") == null) {
+          el = el.parent("[mv-draggable]");
+        }
+        if (el.index() !== _.indexOf(this.list, ctrl.dragged.data)) {
+          ctrl.switchWith(this.list[el.index()], this, el, e);
+        }
+        return false;
+      };
+
+      MvList.prototype.drop = function(e) {
+        return mvController.stop();
+      };
+
+      MvList.prototype.accepts = function(data) {
+        return true;
+      };
+
+      MvList.prototype.updated = function() {};
+
+      return MvList;
+
+    })();
   }
 ]);

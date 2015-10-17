@@ -1,0 +1,7 @@
+.mvPlaceholder {
+  display: none;
+}
+
+.mvPlaceholder:first-child {
+  display: inherit;
+}

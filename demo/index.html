@@ -3,10 +3,11 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>MV Demo</title>
 
     <link href="/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/mv.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -28,61 +29,26 @@
 
           <div class="col-sm-4">
             <div class="panel panel-default">
-              <ul class="list-group" mv-container="lines1">
-                {{ mvSelected }}
-                <li
-                  ng-repeat="line in lines1"
-                  mv-draggable
-                  class="list-group-item list-group-item-info"
-                  ng-class="{'list-group-item-warning': mvDragged}">
-                  {{ line.msg }}
-                </li>
-                <li class="list-group-item active" mv-placeholder>
-                  This list is empty, drop an element.
-                </li>
-              </ul>
+              <demo-list lines="lines1"></demo-list>
             </div>
           </div>
 
           <div class="col-sm-4">
             <div class="panel panel-default">
-              <ul class="list-group" mv-container="lines2">
-                <li
-                  ng-repeat="line in lines2"
-                  mv-draggable
-                  class="list-group-item list-group-item-success"
-                  ng-class="{'list-group-item-warning': mvDragged}">
-                  {{ line.msg }}
-                </li>
-                <li class="list-group-item active" mv-placeholder>
-                  This list is empty, drop an element.
-                </li>
-              </ul>
+              <demo-list lines="lines2"></demo-list>
             </div>
           </div>
 
           <div class="col-sm-4">
             <div class="panel panel-default">
-              <ul class="list-group" mv-container="lines3">
-                <li
-                  ng-repeat="line in lines3"
-                  mv-draggable="line"
-                  mv-list="lines3"
-                  class="list-group-item"
-                  ng-class="{'list-group-item-warning': mvDragged}">
-                  {{ line.msg }}
-                </li>
-                <li class="list-group-item active" mv-placeholder>
-                  This list is empty, drop an element.
-                </li>
-              </ul>
+              <demo-list lines="lines3"></demo-list>
             </div>
           </div>
 
         </div>
 
         <button ng-click="logModel()" class="btn btn-sm btn-default">log model</button>
-
+        <button ng-click="remove()" class="btn btn-sm btn-default">remove</button>
       </div>
 
     </div>
@@ -91,7 +57,6 @@
     <script src="/bower_components/lodash/lodash.min.js"></script>
     <script src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="/bower_components/angular/angular.js"></script>
-    <!-- <script src="/bower_components/angular-touch/angular-touch.js"></script> -->
     <script src="/mv.js"></script>
     <script src="/demo/demo.js"></script>
 
