@@ -6,7 +6,7 @@ angular.module("angular-mv").factory("mvList", [
 
     class MvList
 
-      constructor: (@list, @elem) ->
+      constructor: (@list, @elem, @vertical = true) ->
         @setup()
 
       getEl = (e) -> angular.element(e.target)
@@ -17,12 +17,17 @@ angular.module("angular-mv").factory("mvList", [
         e
 
       handle: (next) ->
-        (e) => next(stopPropagation(e))
+        (e) =>
+          ctrl = mvController.get()
+          if !ctrl? or !@accepts(ctrl.dragged.data, @list)
+            return
+          next(stopPropagation(e))
 
       setup: ->
-        @elem.on("dragstart.angular-mv", "[mv-draggable]", @handle(@dragstart))
+        @elem.on("dragstart.angular-mv", "[mv-draggable]", @dragstart)
         @elem.on("dragenter.angular-mv", "[mv-draggable]", @handle(@dragenter))
         @elem.on("dragenter.angular-mv", ".mvPlaceholder", @handle(@dragenter))
+        @elem.on("dragover.angular-mv", @handle(-> ))
         @elem.on("dragover.angular-mv", "[mv-draggable]", @handle(@dragover))
         @elem.on("drop.angular-mv", "[mv-draggable]", @handle(@drop))
 
@@ -34,24 +39,25 @@ angular.module("angular-mv").factory("mvList", [
         @elem.off("drop.angular-mv", "[mv-draggable]")
 
       draggedData: ->
-        if !mvController.get()? then return
-        mvController.get().dragged.data
+        if mvController.get()?
+          return mvController.get().dragged.data
 
       dragstart: (e) =>
+        e = stopPropagation(e)
         el = getEl(e)
         dg =
           data: @list[el.index()]
           elem: el
           container: @
-        mvController.start(dg, e)
+        mvController.start(dg, e, false, @vertical)
 
       dragenter: (e) =>
         ctrl = mvController.get()
         if !ctrl? then return
-        el = getEl(e)
+        el = getEl(e).closest(".mvPlaceholder, [mv-draggable]", @elem)
         if el.hasClass("mvPlaceholder")
           ctrl.insertInto(@)
-        else if el.attr("mv-draggable")?
+        else if el.attr("mv-draggable")? and el.parent().is(@elem)
           data = @list[el.index()]
           if ctrl.dragged.data == data then return
           ctrl.switchWith(data, @, el, e)
@@ -62,15 +68,17 @@ angular.module("angular-mv").factory("mvList", [
         e.dataTransfer.dropEffect = 'move'
         ctrl = mvController.get()
         el = getEl(e)
-        if !el.attr("mv-draggable")?
-          el = el.parent("[mv-draggable]")
-        if el.index() != _.indexOf(@list, ctrl.dragged.data)
-          ctrl.switchWith(@list[el.index()], @, el, e)
+        el = el.closest("[mv-draggable], .mvSelector", @elem)
+        if el.parent().is(@elem)
+          if el.hasClass("mvPlaceholder")
+            ctrl.insertInto(@)
+          else if el.index() != _.indexOf(@list, ctrl.dragged.data)
+            ctrl.switchWith(@list[el.index()], @, el, e)
         false
 
       drop: (e) => mvController.stop()
 
-      accepts: (data) -> true
+      accepts: (data, list) -> true
 
       updated: ->
 

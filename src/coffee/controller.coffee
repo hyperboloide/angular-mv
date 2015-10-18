@@ -109,6 +109,8 @@ angular.module("angular-mv").factory("mvController", [
         if @vertical
           if elem.outerHeight() <= @original.height then return true
           return event.pageY - elem.offset().top <= @original.height
+        else
+          if elem.outerWidth() <= @original.width then return true
         return false
 
       moveAfter: (list, data) ->
@@ -132,6 +134,7 @@ angular.module("angular-mv").factory("mvController", [
         if container != @dragged.container then @removeFrom()
         idxElem = _.indexOf(container.list, data)
         idxDrag = _.indexOf(container.list, @dragged.data)
+
         switch
           when idxDrag == -1
             @moveBefore(container.list, data)
@@ -145,6 +148,7 @@ angular.module("angular-mv").factory("mvController", [
         container.updated()
 
       insertInto: (container) ->
+        if _.includes(container.list, @dragged.data) then return
         @removeFrom()
         container.list.push(@dragged.data)
         @dragged.container = container

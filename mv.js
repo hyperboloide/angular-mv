@@ -303,6 +303,10 @@ angular.module("angular-mv").factory("mvController", [
             return true;
           }
           return event.pageY - elem.offset().top <= this.original.height;
+        } else {
+          if (elem.outerWidth() <= this.original.width) {
+            return true;
+          }
         }
         return false;
       };
@@ -359,6 +363,9 @@ angular.module("angular-mv").factory("mvController", [
       };
 
       MvController.prototype.insertInto = function(container) {
+        if (_.includes(container.list, this.dragged.data)) {
+          return;
+        }
         this.removeFrom();
         container.list.push(this.dragged.data);
         this.dragged.container = container;
@@ -414,9 +421,10 @@ angular.module("angular-mv").factory("mvList", [
     return MvList = (function() {
       var getEl, stopPropagation;
 
-      function MvList(list, elem) {
-        this.list = list;
+      function MvList(list1, elem, vertical) {
+        this.list = list1;
         this.elem = elem;
+        this.vertical = vertical != null ? vertical : true;
         this.drop = bind(this.drop, this);
         this.dragover = bind(this.dragover, this);
         this.dragenter = bind(this.dragenter, this);
@@ -440,15 +448,21 @@ angular.module("angular-mv").factory("mvList", [
       MvList.prototype.handle = function(next) {
         return (function(_this) {
           return function(e) {
+            var ctrl;
+            ctrl = mvController.get();
+            if ((ctrl == null) || !_this.accepts(ctrl.dragged.data, _this.list)) {
+              return;
+            }
             return next(stopPropagation(e));
           };
         })(this);
       };
 
       MvList.prototype.setup = function() {
-        this.elem.on("dragstart.angular-mv", "[mv-draggable]", this.handle(this.dragstart));
+        this.elem.on("dragstart.angular-mv", "[mv-draggable]", this.dragstart);
         this.elem.on("dragenter.angular-mv", "[mv-draggable]", this.handle(this.dragenter));
         this.elem.on("dragenter.angular-mv", ".mvPlaceholder", this.handle(this.dragenter));
+        this.elem.on("dragover.angular-mv", this.handle(function() {}));
         this.elem.on("dragover.angular-mv", "[mv-draggable]", this.handle(this.dragover));
         return this.elem.on("drop.angular-mv", "[mv-draggable]", this.handle(this.drop));
       };
@@ -462,21 +476,21 @@ angular.module("angular-mv").factory("mvList", [
       };
 
       MvList.prototype.draggedData = function() {
-        if (mvController.get() == null) {
-          return;
+        if (mvController.get() != null) {
+          return mvController.get().dragged.data;
         }
-        return mvController.get().dragged.data;
       };
 
       MvList.prototype.dragstart = function(e) {
         var dg, el;
+        e = stopPropagation(e);
         el = getEl(e);
         dg = {
           data: this.list[el.index()],
           elem: el,
           container: this
         };
-        return mvController.start(dg, e);
+        return mvController.start(dg, e, false, this.vertical);
       };
 
       MvList.prototype.dragenter = function(e) {
@@ -485,10 +499,10 @@ angular.module("angular-mv").factory("mvList", [
         if (ctrl == null) {
           return;
         }
-        el = getEl(e);
+        el = getEl(e).closest(".mvPlaceholder, [mv-draggable]", this.elem);
         if (el.hasClass("mvPlaceholder")) {
           return ctrl.insertInto(this);
-        } else if (el.attr("mv-draggable") != null) {
+        } else if ((el.attr("mv-draggable") != null) && el.parent().is(this.elem)) {
           data = this.list[el.index()];
           if (ctrl.dragged.data === data) {
             return;
@@ -505,11 +519,13 @@ angular.module("angular-mv").factory("mvList", [
         e.dataTransfer.dropEffect = 'move';
         ctrl = mvController.get();
         el = getEl(e);
-        if (el.attr("mv-draggable") == null) {
-          el = el.parent("[mv-draggable]");
-        }
-        if (el.index() !== _.indexOf(this.list, ctrl.dragged.data)) {
-          ctrl.switchWith(this.list[el.index()], this, el, e);
+        el = el.closest("[mv-draggable], .mvSelector", this.elem);
+        if (el.parent().is(this.elem)) {
+          if (el.hasClass("mvPlaceholder")) {
+            ctrl.insertInto(this);
+          } else if (el.index() !== _.indexOf(this.list, ctrl.dragged.data)) {
+            ctrl.switchWith(this.list[el.index()], this, el, e);
+          }
         }
         return false;
       };
@@ -518,7 +534,7 @@ angular.module("angular-mv").factory("mvList", [
         return mvController.stop();
       };
 
-      MvList.prototype.accepts = function(data) {
+      MvList.prototype.accepts = function(data, list) {
         return true;
       };
 

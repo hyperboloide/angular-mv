@@ -25,27 +25,9 @@
 
       <div ng-controller="simpleCtrl">
 
-        <div class="row">
 
-          <div class="col-sm-4">
-            <div class="panel panel-default">
-              <demo-list lines="lines1"></demo-list>
-            </div>
-          </div>
+          <demo-cols></demo-cols>
 
-          <div class="col-sm-4">
-            <div class="panel panel-default">
-              <demo-list lines="lines2"></demo-list>
-            </div>
-          </div>
-
-          <div class="col-sm-4">
-            <div class="panel panel-default">
-              <demo-list lines="lines3"></demo-list>
-            </div>
-          </div>
-
-        </div>
 
         <button ng-click="logModel()" class="btn btn-sm btn-default">log model</button>
         <button ng-click="remove()" class="btn btn-sm btn-default">remove</button>
