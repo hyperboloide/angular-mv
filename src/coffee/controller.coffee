@@ -33,10 +33,7 @@ angular.module("angular-mv").factory("mvController", [
             @restorePosition()
             false
           )
-          $("body").on("drop.angular-mv", =>
-            console.log "body drop"
-            @clean()
-          )
+          $("body").on("drop.angular-mv", => @clean())
 
       unregisterBody: ->
         if @mobile == false
@@ -111,6 +108,7 @@ angular.module("angular-mv").factory("mvController", [
           return event.pageY - elem.offset().top <= @original.height
         else
           if elem.outerWidth() <= @original.width then return true
+          return event.pageX - elem.offset().left <= @original.width
         return false
 
       moveAfter: (list, data) ->

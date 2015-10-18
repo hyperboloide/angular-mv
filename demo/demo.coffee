@@ -1,28 +1,22 @@
 angular.module('demo', ['angular-mv'])
 
+angular.module('demo').controller("horizontalCtrl", ["$scope", "$element", "mvList", ($scope, $element, MvList) ->
+
+  $scope.words = [
+    {txt:"machin", size: 2}
+    {txt:"truc", size: 2}
+    {txt:"xs", size: 1}
+    {txt:"very long text", size: 4}
+  ]
+
+  $scope.list = new MvList($scope.words, $element, false)
+  $scope.list.updated = -> $scope.$apply()
+  $scope.list.accepts = (data, list) -> data.txt?
+
+])
+
+
 angular.module('demo').controller("simpleCtrl", ["$scope", "$element", ($scope, $element) ->
-
-  lines1 = [
-    {msg: "Line 1"}
-    {msg: "Line 2"}
-    {msg: "Line 3 - Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."}
-    {msg: "Line 4"}
-    {msg: "Line 5"}
-    {msg: "Line 6"}
-  ]
-
-  lines2 = [
-    {msg: "Line 1"}
-    {msg: "Line 2"}
-  ]
-
-  lines3 = []
-
-  $scope.cols = [
-    {lines: lines1},
-    {lines: lines2},
-    {lines: lines3}
-  ]
 
   $scope.logModel = ->
     model =
@@ -30,6 +24,105 @@ angular.module('demo').controller("simpleCtrl", ["$scope", "$element", ($scope, 
       lines2: $scope.lines2
       lines3: $scope.lines3
     console.log model
+
+  $scope.selected = 0
+
+  $scope.pages = [
+    {
+      title: "page 1"
+      cols: [
+        {
+          lines: [
+            {msg: "Line 1"}
+            {msg: "Line 2"}
+            {msg: "Line 3 - Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."}
+          ]
+        }
+        {
+          lines: [
+            {msg: "Line 1"}
+            {msg: "Line 2"}
+            {msg: "Line 3 - Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."}
+          ]
+        }
+      ]
+    }
+    {
+      title: "page 2"
+      cols: [
+        {
+          lines: [
+            {msg: "Line 1"}
+            {msg: "Line 2"}
+            {msg: "Line 3 - Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."}
+          ]
+        }
+        {
+          lines: [
+            {msg: "Line 1"}
+            {msg: "Line 2"}
+            {msg: "Line 3 - Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."}
+          ]
+        }
+      ]
+    }
+    {
+      title: "page 3"
+      cols: [
+        {
+          lines: [
+            {msg: "Line 1"}
+            {msg: "Line 2"}
+            {msg: "Line 3 - Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."}
+          ]
+        }
+        {
+          lines: [
+            {msg: "Line 1"}
+            {msg: "Line 2"}
+            {msg: "Line 3 - Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."}
+          ]
+        }
+      ]
+    }
+  ]
+
+])
+
+angular.module("demo").directive("demoPages", [
+  "mvList"
+  (
+    MvList
+  ) ->
+
+    l = (scope, elem) ->
+      scope.change = (idx) -> scope.selected = idx
+
+      w = scope.$watch("pages", (pages) ->
+        if !pages? then return else w()
+        scope.list = new MvList(pages, elem)
+        scope.list.updated = -> scope.$apply()
+        scope.list.accepts = (data, list) -> data.cols?
+      )
+
+      elem.on("dragenter", "li", (e)->
+        el = angular.element(e.target).closest("li")
+        scope.selected = el.index()
+        scope.$apply()
+      )
+
+    return {
+      link: l
+      restrict: "E"
+      replace: true
+      template: """
+      <ul class="nav nav-tabs nav-justified">
+        <li ng-repeat="page in pages" role="presentation" mv-draggable ng-class="{'active': selected == $index}">
+          <a ng-click="change($index)" href="">{{page.title}}</a>
+        </li>
+      </ul>
+      """
+    }
 
 ])
 
@@ -54,6 +147,8 @@ angular.module("demo").directive("demoCols", [
       link: l
       restrict: "E"
       replace: true
+      scope:
+        cols: "=cols"
       template: """
       <div>
         <div ng-repeat="col in cols" mv-draggable>

@@ -238,7 +238,6 @@ angular.module("angular-mv").factory("mvController", [
           })(this));
           return $("body").on("drop.angular-mv", (function(_this) {
             return function() {
-              console.log("body drop");
               return _this.clean();
             };
           })(this));
@@ -307,6 +306,7 @@ angular.module("angular-mv").factory("mvController", [
           if (elem.outerWidth() <= this.original.width) {
             return true;
           }
+          return event.pageX - elem.offset().left <= this.original.width;
         }
         return false;
       };
