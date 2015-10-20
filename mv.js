@@ -484,7 +484,7 @@ angular.module("angular-mv").factory("mvList", [
         this.elem.off("dragstart.angular-mv", "[mv-draggable]");
         this.elem.off("dragenter.angular-mv", "[mv-draggable]");
         this.elem.on("dragenter.angular-mv", ".mvPlaceholder");
-        this.elem.on("dragover.angular-mv", this.handle(function() {}));
+        this.elem.off("dragover.angular-mv");
         this.elem.off("dragover.angular-mv", "[mv-draggable]");
         return this.elem.off("drop.angular-mv", "[mv-draggable]");
       };
