@@ -29,18 +29,9 @@
   ]);
 
   angular.module('demo').controller("simpleCtrl", [
-    "$scope", "$element", function($scope, $element) {
-      $scope.logModel = function() {
-        var model;
-        model = {
-          lines1: $scope.lines1,
-          lines2: $scope.lines2,
-          lines3: $scope.lines3
-        };
-        return console.log(model);
-      };
+    "$scope", "$element", "mvNew", "$compile", function($scope, $element, MvNew, $compile) {
       $scope.selected = 0;
-      return $scope.pages = [
+      $scope.pages = [
         {
           title: "page 1",
           cols: [
@@ -118,6 +109,18 @@
           ]
         }
       ];
+      $scope.logModel = function() {
+        return console.log($scope.pages);
+      };
+      $scope.newLine = new MvNew($("#newLine"));
+      $scope.newLine.start = function() {
+        return {
+          msg: "New Line"
+        };
+      };
+      return $scope.newLine.cancel = function() {
+        return console.log("cancel");
+      };
     }
   ]);
 
@@ -143,11 +146,14 @@
             return data.cols != null;
           };
         });
-        return elem.on("dragenter", "li", function(e) {
+        elem.on("dragenter", "li", function(e) {
           var el;
           el = angular.element(e.target).closest("li");
           scope.selected = el.index();
           return scope.$apply();
+        });
+        return scope.$on("destroy", function() {
+          return scope.list.destroy();
         });
       };
       return {

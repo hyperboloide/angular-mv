@@ -16,14 +16,7 @@ angular.module('demo').controller("horizontalCtrl", ["$scope", "$element", "mvLi
 ])
 
 
-angular.module('demo').controller("simpleCtrl", ["$scope", "$element", ($scope, $element) ->
-
-  $scope.logModel = ->
-    model =
-      lines1: $scope.lines1
-      lines2: $scope.lines2
-      lines3: $scope.lines3
-    console.log model
+angular.module('demo').controller("simpleCtrl", ["$scope", "$element", "mvNew", "$compile", ($scope, $element, MvNew, $compile) ->
 
   $scope.selected = 0
 
@@ -87,6 +80,15 @@ angular.module('demo').controller("simpleCtrl", ["$scope", "$element", ($scope, 
     }
   ]
 
+  $scope.logModel = -> console.log $scope.pages
+
+  $scope.newLine = new MvNew($("#newLine"))
+  $scope.newLine.start = -> {msg: "New Line"}
+  $scope.newLine.cancel = -> console.log "cancel"
+  # $scope.newLine.preview = (data)->
+
+
+
 ])
 
 angular.module("demo").directive("demoPages", [
@@ -110,6 +112,8 @@ angular.module("demo").directive("demoPages", [
         scope.selected = el.index()
         scope.$apply()
       )
+
+      scope.$on("destroy", -> scope.list.destroy())
 
     return {
       link: l

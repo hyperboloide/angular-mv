@@ -14,9 +14,10 @@ angular.module("angular-mv").factory("mvController", [
       constructor: (@dragged, event, @mobile = false, @vertical = true) ->
         @original =
           container: @dragged.container
-          index: _.indexOf(@dragged.container.list, @dragged.data)
           height: @dragged.elem.outerHeight()
           whidth: @dragged.elem.outerWidth()
+        if @dragged.container.list?
+          @original.index = _.indexOf(@dragged.container.list, @dragged.data)
         if @mobile == false
           json = JSON.stringify(@dragged.data)
           event.dataTransfer.setData("application/json", json)
@@ -33,7 +34,10 @@ angular.module("angular-mv").factory("mvController", [
             @restorePosition()
             false
           )
-          $("body").on("drop.angular-mv", => @clean())
+          $("body").on("drop.angular-mv", =>
+            if _.isFunction(@dragged.container.cancel)
+              @dragged.container.cancel()
+            @clean())
 
       unregisterBody: ->
         if @mobile == false
@@ -45,6 +49,10 @@ angular.module("angular-mv").factory("mvController", [
           idx = _.indexOf(@dragged.container.list, @dragged.data)
           @dragged.container.list.splice(idx, 1)
           @dragged.container.updated()
+        if !@original.index?
+          @dragged.container = @original.container
+          @original.container.updated()
+          return
         idx = _.indexOf(@original.container.list, @dragged.data)
         if idx != @original.index
             if idx >= 0 then @original.container.list.splice(idx, 1)
@@ -124,6 +132,7 @@ angular.module("angular-mv").factory("mvController", [
         list.splice(idx, 0, @dragged.data)
 
       removeFrom: ->
+        if !@dragged.container.list? then return
         idx = _.indexOf(@dragged.container.list, @dragged.data)
         @dragged.container.list.splice(idx, 1)
         @dragged.container.updated()

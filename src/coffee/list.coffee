@@ -35,6 +35,7 @@ angular.module("angular-mv").factory("mvList", [
         @elem.off("dragstart.angular-mv", "[mv-draggable]")
         @elem.off("dragenter.angular-mv", "[mv-draggable]")
         @elem.on("dragenter.angular-mv", ".mvPlaceholder")
+        @elem.off("dragover.angular-mv")
         @elem.off("dragover.angular-mv", "[mv-draggable]")
         @elem.off("drop.angular-mv", "[mv-draggable]")
 

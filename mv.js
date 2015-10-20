@@ -210,10 +210,12 @@ angular.module("angular-mv").factory("mvController", [
         this.vertical = vertical != null ? vertical : true;
         this.original = {
           container: this.dragged.container,
-          index: _.indexOf(this.dragged.container.list, this.dragged.data),
           height: this.dragged.elem.outerHeight(),
           whidth: this.dragged.elem.outerWidth()
         };
+        if (this.dragged.container.list != null) {
+          this.original.index = _.indexOf(this.dragged.container.list, this.dragged.data);
+        }
         if (this.mobile === false) {
           json = JSON.stringify(this.dragged.data);
           event.dataTransfer.setData("application/json", json);
@@ -238,6 +240,9 @@ angular.module("angular-mv").factory("mvController", [
           })(this));
           return $("body").on("drop.angular-mv", (function(_this) {
             return function() {
+              if (_.isFunction(_this.dragged.container.cancel)) {
+                _this.dragged.container.cancel();
+              }
               return _this.clean();
             };
           })(this));
@@ -257,6 +262,11 @@ angular.module("angular-mv").factory("mvController", [
           idx = _.indexOf(this.dragged.container.list, this.dragged.data);
           this.dragged.container.list.splice(idx, 1);
           this.dragged.container.updated();
+        }
+        if (this.original.index == null) {
+          this.dragged.container = this.original.container;
+          this.original.container.updated();
+          return;
         }
         idx = _.indexOf(this.original.container.list, this.dragged.data);
         if (idx !== this.original.index) {
@@ -333,6 +343,9 @@ angular.module("angular-mv").factory("mvController", [
 
       MvController.prototype.removeFrom = function() {
         var idx;
+        if (this.dragged.container.list == null) {
+          return;
+        }
         idx = _.indexOf(this.dragged.container.list, this.dragged.data);
         this.dragged.container.list.splice(idx, 1);
         return this.dragged.container.updated();
@@ -401,7 +414,7 @@ angular.module("angular-mv").factory("mvController", [
 ]);
 
 angular.module("angular-mv").directive("mvDraggable", [
-  "$timeout", "mvController", function($timeout, mvController) {
+  function() {
     var l;
     l = function(scope, elem) {
       return elem.attr("draggable", true);
@@ -471,6 +484,7 @@ angular.module("angular-mv").factory("mvList", [
         this.elem.off("dragstart.angular-mv", "[mv-draggable]");
         this.elem.off("dragenter.angular-mv", "[mv-draggable]");
         this.elem.on("dragenter.angular-mv", ".mvPlaceholder");
+        this.elem.on("dragover.angular-mv", this.handle(function() {}));
         this.elem.off("dragover.angular-mv", "[mv-draggable]");
         return this.elem.off("drop.angular-mv", "[mv-draggable]");
       };
@@ -541,6 +555,68 @@ angular.module("angular-mv").factory("mvList", [
       MvList.prototype.updated = function() {};
 
       return MvList;
+
+    })();
+  }
+]);
+
+var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+angular.module("angular-mv").factory("mvNew", [
+  "mvController", function(mvController) {
+    var MvNew;
+    return MvNew = (function() {
+      var stopPropagation;
+
+      function MvNew(elem, vertical) {
+        this.elem = elem;
+        this.vertical = vertical != null ? vertical : true;
+        this.dragstart = bind(this.dragstart, this);
+        this.destroy = bind(this.destroy, this);
+        this.elem.attr("draggable", true);
+        this.setup();
+      }
+
+      stopPropagation = function(e) {
+        e = e.originalEvent != null ? e.originalEvent : e;
+        if (e.stopPropagation != null) {
+          e.stopPropagation();
+        }
+        return e;
+      };
+
+      MvNew.prototype.setup = function() {
+        return this.elem.on("dragstart.angular-mv", this.dragstart);
+      };
+
+      MvNew.prototype.destroy = function() {
+        return this.elem.off("dragstart.angular-mv");
+      };
+
+      MvNew.prototype.start = function() {};
+
+      MvNew.prototype.cancel = function() {};
+
+      MvNew.prototype.complete = function() {};
+
+      MvNew.prototype.preview = function(data) {
+        return this.elem;
+      };
+
+      MvNew.prototype.updated = function() {};
+
+      MvNew.prototype.dragstart = function(e) {
+        var dg;
+        e = stopPropagation(e);
+        dg = {
+          data: this.start(),
+          elem: this.preview(),
+          container: this
+        };
+        return mvController.start(dg, e, false, this.vertical);
+      };
+
+      return MvNew;
 
     })();
   }
