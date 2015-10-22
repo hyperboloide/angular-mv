@@ -84,7 +84,8 @@ angular.module('demo').controller("simpleCtrl", ["$scope", "$element", "mvNew", 
 
   $scope.newLine = new MvNew($("#newLine"))
   $scope.newLine.start = -> {msg: "New Line"}
-  $scope.newLine.cancel = -> console.log "cancel"
+  $scope.newLine.cancel = ->
+    console.log "cancel"
   # $scope.newLine.preview = (data)->
 
 

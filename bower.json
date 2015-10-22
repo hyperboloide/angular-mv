@@ -1,5 +1,5 @@
 {
-  "name": "mv",
+  "name": "angular-mv",
   "version": "0.1.1",
   "authors": [
     "Frederic Delbos <fred@hyperboloide.com>"
@@ -22,10 +22,13 @@
     "gulpfile.js"
   ],
   "dependencies": {
-    "lodash": "~3.10.1"
+    "lodash": "^3.10.1",
+    "angular": "^1.4.5",
+    "jquery": "^2.1.4"
   },
   "devDependencies": {
-    "angular-mocks": "~1.4.5",
-    "bootstrap": "~3.3.5"
+    "angular-mocks": "^1.4.5",
+    "bootstrap": "^3.3.5",
+    "jquery": "^2.1.4"
   }
 }

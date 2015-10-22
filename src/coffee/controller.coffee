@@ -8,7 +8,6 @@ angular.module("angular-mv").factory("mvController", [
 
     _controller = null
 
-
     class MvController
 
       constructor: (@dragged, event, @mobile = false, @vertical = true) ->
@@ -80,36 +79,6 @@ angular.module("angular-mv").factory("mvController", [
           @preview.hide()
         )
 
-      # setTouchPreview: (event) ->
-      #   touch = event.touches[0]
-      #   @createPreview(touch)
-      #   @preview.css("position", "relative")
-      #   @preview.css("z-index", "9999")
-      #   @preview.offset({
-      #     top: touch.pageY - @offset.y
-      #     left: touch.pageX - @offset.x})
-      #   @intervalId = setInterval(@checkUnder, 50)
-
-      # checkUnder: =>
-      #   if !@lastTouchMove then return
-      #   @preview.hide()
-      #   el = $(document.elementFromPoint(@lastTouchMove.clientX, @lastTouchMove.clientY))
-      #   if el.attr("mv-draggable") != "" and el.hasClass("mvPlaceholder") != ""
-      #     @restorePosition()
-      #
-      #   # if @lastElem? and !el.is(@lastElem)
-      #   #   if @lastElem.attr("mv-placeholder") == ""
-      #   #     if @lastElem.parent().children().length < 2
-      #   #       console.log "show"
-      #   #       @lastElem.trigger("showplaceholder.angular-mv")
-      #   #     else console.log @lastElem.parent().children()
-      #   # @lastElem = el
-      #
-      #   el.trigger("move.angular-mv")
-      #   @preview.show()
-
-      # setLastTouchmove: (e) -> @lastTouchMove = e
-      #
       canSwitch: (elem, event) ->
         if @vertical
           if elem.outerHeight() <= @original.height then return true
